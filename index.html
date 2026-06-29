@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14181F;
+    --bg-panel: #1B212B;
+    --border: #2A323F;
+    --text: #E8E6DE;
+    --text-muted: #7A8290;
+    --accent-cyan: #5EE6D9;
+    --accent-amber: #F2A33D;
+    --accent-error: #E0667A;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+  }
+
+  a { color: inherit; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .brand-mark {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+  }
+
+  .status[data-state="loading"] .status-dot {
+    background: var(--accent-amber);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  .status[data-state="ready"] .status-dot {
+    background: var(--accent-cyan);
+  }
+
+  .status[data-state="error"] .status-dot {
+    background: var(--accent-error);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .status-dot { animation: none !important; }
+  }
+
+  .github-link {
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    transition: color .15s, border-color .15s;
+  }
+
+  .github-link:hover,
+  .github-link:focus-visible {
+    color: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+  }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .viewer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .page-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  button {
+    width: 32px;
+    height: 32px;
+    background: var(--bg-panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 16px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+
+  button:hover:not(:disabled),
+  button:focus-visible {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+  }
+
+  .zoom-info {
+    min-width: 48px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  #download-link {
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 7px 14px;
+    transition: color .15s, border-color .15s;
+  }
+
+  #download-link:hover,
+  #download-link:focus-visible {
+    color: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+  }
+
+  .pdf-pages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .page-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .page-card canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  .empty-state {
+    max-width: 360px;
+    margin: 48px auto;
+    text-align: center;
+    padding: 0 24px;
+  }
+
+  .empty-title {
+    margin: 0 0 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .empty-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  footer {
+    padding: 24px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 600px) {
+    .topbar { padding: 14px 16px; }
+    main { padding: 24px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">PORTFOLIO</span>
+    <span class="status" id="status" data-state="loading">
+      <span class="status-dot"></span>
+      <span class="status-text" id="status-text">불러오는 중</span>
+    </span>
+  </div>
+  <!-- 본인 깃허브 프로필 주소로 바꿀 것 -->
+  <a class="github-link" href="https://github.com/HanbiJang" target="_blank" rel="noopener">GitHub</a>
+</header>
+
+<main>
+  <section class="viewer">
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <span class="page-info">총 <span id="page-count">0</span>페이지</span>
+      </div>
+      <div class="toolbar-group">
+        <button id="zoom-out" aria-label="축소">−</button>
+        <span class="zoom-info" id="zoom-level">100%</span>
+        <button id="zoom-in" aria-label="확대">+</button>
+        <a id="download-link" href="assets/portfolio.pdf" download>PDF 다운로드</a>
+      </div>
+    </div>
+
+    <div class="canvas-stage" id="canvas-stage">
+      <div class="pdf-pages" id="pdf-pages"></div>
+      <div class="empty-state" id="empty-state" hidden>
+        <p class="empty-title">포트폴리오 파일이 아직 없습니다</p>
+        <p class="empty-desc">assets/portfolio.pdf 경로에 파일을 올리면 자동으로 여기에 표시됩니다.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>Unity Client Developer, 2026</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  // pdf 파일 경로, 이 경로에 파일만 올리면 자동으로 뜸
+  var PDF_URL = 'assets/portfolio.pdf';
+
+  var statusEl = document.getElementById('status');
+  var statusTextEl = document.getElementById('status-text');
+  var stage = document.getElementById('canvas-stage');
+  var pagesContainer = document.getElementById('pdf-pages');
+  var emptyState = document.getElementById('empty-state');
+  var toolbar = document.querySelector('.toolbar');
+  var pageCountEl = document.getElementById('page-count');
+  var zoomLevelEl = document.getElementById('zoom-level');
+  var zoomInBtn = document.getElementById('zoom-in');
+  var zoomOutBtn = document.getElementById('zoom-out');
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  var pdfDoc = null;
+  var baseScale = 1;   // 화면 너비에 맞춘 기준 배율
+  var currentScale = 1;
+
+  function setStatus(state, text) {
+    statusEl.dataset.state = state;
+    statusTextEl.textContent = text;
+  }
+
+  function showEmpty() {
+    pagesContainer.hidden = true;
+    emptyState.hidden = false;
+    toolbar.hidden = true;
+  }
+
+  function computeBaseScale(page) {
+    var viewport = page.getViewport({ scale: 1 });
+    var stageWidth = stage.clientWidth - 56; // 카드 패딩, 테두리 뺀 값
+    return stageWidth / viewport.width;
+  }
+
+  // 페이지 하나를 캔버스에 그려서 pdf-pages 안에 추가함
+  function renderSinglePage(num) {
+    return pdfDoc.getPage(num).then(function (page) {
+      var viewport = page.getViewport({ scale: currentScale });
+      var dpr = window.devicePixelRatio || 1; // 고해상도 화면 보정용
+
+      var card = document.createElement('div');
+      card.className = 'page-card';
+
+      var canvas = document.createElement('canvas');
+      canvas.width = viewport.width * dpr;
+      canvas.height = viewport.height * dpr;
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
+
+      card.appendChild(canvas);
+      pagesContainer.appendChild(card);
+
+      var ctx = canvas.getContext('2d');
+      var transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null;
+      return page.render({ canvasContext: ctx, viewport: viewport, transform: transform }).promise;
+    });
+  }
+
+  // 전체 페이지를 순서대로 하나씩 그림, 한꺼번에 그리면 순서가 뒤섞일 수 있어서 순차로 처리함
+  function renderAllPages() {
+    pagesContainer.innerHTML = '';
+    var nums = [];
+    for (var i = 1; i <= pdfDoc.numPages; i++) nums.push(i);
+
+    return nums.reduce(function (chain, num) {
+      return chain.then(function () { return renderSinglePage(num); });
+    }, Promise.resolve());
+  }
+
+  function loadPdf() {
+    setStatus('loading', '불러오는 중');
+
+    pdfjsLib.getDocument(PDF_URL).promise.then(function (doc) {
+      pdfDoc = doc;
+      pageCountEl.textContent = doc.numPages;
+      return doc.getPage(1);
+    }).then(function (firstPage) {
+      baseScale = computeBaseScale(firstPage);
+      currentScale = baseScale;
+      zoomLevelEl.textContent = '100%';
+      setStatus('ready', '표시 중');
+      return renderAllPages();
+    }).catch(function (err) {
+      console.error(err); // 파일이 없거나 경로가 잘못된 경우 여기로 옴
+      setStatus('error', '파일 없음');
+      showEmpty();
+    });
+  }
+
+  zoomInBtn.addEventListener('click', function () {
+    if (!pdfDoc) return;
+    currentScale = Math.min(currentScale * 1.2, baseScale * 3);
+    zoomLevelEl.textContent = Math.round((currentScale / baseScale) * 100) + '%';
+    renderAllPages();
+  });
+
+  zoomOutBtn.addEventListener('click', function () {
+    if (!pdfDoc) return;
+    currentScale = Math.max(currentScale / 1.2, baseScale * 0.5);
+    zoomLevelEl.textContent = Math.round((currentScale / baseScale) * 100) + '%';
+    renderAllPages();
+  });
+
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (!pdfDoc) return;
+      pdfDoc.getPage(1).then(function (firstPage) {
+        baseScale = computeBaseScale(firstPage);
+        currentScale = baseScale;
+        zoomLevelEl.textContent = '100%';
+        renderAllPages();
+      });
+    }, 200); // 리사이즈 중에 계속 다시 그리지 않도록 지연
+  });
+
+  loadPdf();
+</script>
+
+</body>
+</html>

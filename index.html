@@ -147,32 +147,6 @@
     color: var(--text-muted);
   }
 
-  button {
-    width: 32px;
-    height: 32px;
-    background: var(--bg-panel);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 16px;
-    cursor: pointer;
-    transition: border-color .15s, color .15s;
-  }
-
-  button:hover:not(:disabled),
-  button:focus-visible {
-    border-color: var(--accent-cyan);
-    color: var(--accent-cyan);
-  }
-
-  .zoom-info {
-    min-width: 48px;
-    text-align: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
   #download-link {
     text-decoration: none;
     font-family: 'JetBrains Mono', monospace;
@@ -266,9 +240,6 @@
         <span class="page-info">총 <span id="page-count">0</span>페이지</span>
       </div>
       <div class="toolbar-group">
-        <button id="zoom-out" aria-label="축소">−</button>
-        <span class="zoom-info" id="zoom-level">100%</span>
-        <button id="zoom-in" aria-label="확대">+</button>
         <a id="download-link" href="assets/portfolio.pdf" download>PDF 다운로드</a>
       </div>
     </div>
@@ -297,16 +268,12 @@
   var emptyState = document.getElementById('empty-state');
   var toolbar = document.querySelector('.toolbar');
   var pageCountEl = document.getElementById('page-count');
-  var zoomLevelEl = document.getElementById('zoom-level');
-  var zoomInBtn = document.getElementById('zoom-in');
-  var zoomOutBtn = document.getElementById('zoom-out');
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   var pdfDoc = null;
-  var baseScale = 1;   // 화면 너비에 맞춘 기준 배율
-  var currentScale = 1;
+  var pageScale = 1; // 화면 너비에 맞춘 배율
 
   function setStatus(state, text) {
     statusEl.dataset.state = state;
@@ -319,7 +286,7 @@
     toolbar.hidden = true;
   }
 
-  function computeBaseScale(page) {
+  function computeScale(page) {
     var viewport = page.getViewport({ scale: 1 });
     var stageWidth = stage.clientWidth - 56; // 카드 패딩, 테두리 뺀 값
     return stageWidth / viewport.width;
@@ -328,7 +295,7 @@
   // 페이지 하나를 캔버스에 그려서 pdf-pages 안에 추가함
   function renderSinglePage(num) {
     return pdfDoc.getPage(num).then(function (page) {
-      var viewport = page.getViewport({ scale: currentScale });
+      var viewport = page.getViewport({ scale: pageScale });
       var dpr = window.devicePixelRatio || 1; // 고해상도 화면 보정용
 
       var card = document.createElement('div');
@@ -368,9 +335,7 @@
       pageCountEl.textContent = doc.numPages;
       return doc.getPage(1);
     }).then(function (firstPage) {
-      baseScale = computeBaseScale(firstPage);
-      currentScale = baseScale;
-      zoomLevelEl.textContent = '100%';
+      pageScale = computeScale(firstPage);
       setStatus('ready', '표시 중');
       return renderAllPages();
     }).catch(function (err) {
@@ -380,29 +345,13 @@
     });
   }
 
-  zoomInBtn.addEventListener('click', function () {
-    if (!pdfDoc) return;
-    currentScale = Math.min(currentScale * 1.2, baseScale * 3);
-    zoomLevelEl.textContent = Math.round((currentScale / baseScale) * 100) + '%';
-    renderAllPages();
-  });
-
-  zoomOutBtn.addEventListener('click', function () {
-    if (!pdfDoc) return;
-    currentScale = Math.max(currentScale / 1.2, baseScale * 0.5);
-    zoomLevelEl.textContent = Math.round((currentScale / baseScale) * 100) + '%';
-    renderAllPages();
-  });
-
   var resizeTimer;
   window.addEventListener('resize', function () {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
       if (!pdfDoc) return;
       pdfDoc.getPage(1).then(function (firstPage) {
-        baseScale = computeBaseScale(firstPage);
-        currentScale = baseScale;
-        zoomLevelEl.textContent = '100%';
+        pageScale = computeScale(firstPage);
         renderAllPages();
       });
     }, 200); // 리사이즈 중에 계속 다시 그리지 않도록 지연

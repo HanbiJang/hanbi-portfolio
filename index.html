@@ -178,9 +178,25 @@
     padding: 12px;
   }
 
-  .page-card canvas {
+  .page-canvas-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  .page-canvas-wrap canvas {
     display: block;
     max-width: 100%;
+  }
+
+  .pdf-link {
+    position: absolute;
+    display: block;
+    cursor: pointer;
+  }
+
+  .pdf-link:hover {
+    outline: 1px solid var(--accent-cyan);
+    background: rgba(94, 230, 217, 0.08);
   }
 
   .empty-state {
@@ -301,18 +317,52 @@
       var card = document.createElement('div');
       card.className = 'page-card';
 
+      var wrap = document.createElement('div');
+      wrap.className = 'page-canvas-wrap';
+
       var canvas = document.createElement('canvas');
       canvas.width = viewport.width * dpr;
       canvas.height = viewport.height * dpr;
       canvas.style.width = viewport.width + 'px';
       canvas.style.height = viewport.height + 'px';
 
-      card.appendChild(canvas);
+      wrap.appendChild(canvas);
+      card.appendChild(wrap);
       pagesContainer.appendChild(card);
 
       var ctx = canvas.getContext('2d');
       var transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null;
-      return page.render({ canvasContext: ctx, viewport: viewport, transform: transform }).promise;
+
+      return page.render({ canvasContext: ctx, viewport: viewport, transform: transform }).promise.then(function () {
+        return addLinkLayer(page, viewport, wrap);
+      });
+    });
+  }
+
+  // pdf 안에 있는 외부 url 링크를 찾아서 캔버스 위 정확한 위치에 클릭 영역을 올림
+  function addLinkLayer(page, viewport, wrap) {
+    return page.getAnnotations().then(function (annotations) {
+      annotations.forEach(function (anno) {
+        if (anno.subtype !== 'Link' || !anno.url) return; // 외부 url 링크만 처리함, 내부 페이지 이동 링크는 제외함
+
+        var rect = viewport.convertToViewportRectangle(anno.rect);
+        var left = Math.min(rect[0], rect[2]);
+        var top = Math.min(rect[1], rect[3]);
+        var width = Math.abs(rect[2] - rect[0]);
+        var height = Math.abs(rect[3] - rect[1]);
+
+        var link = document.createElement('a');
+        link.href = anno.url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.className = 'pdf-link';
+        link.style.left = left + 'px';
+        link.style.top = top + 'px';
+        link.style.width = width + 'px';
+        link.style.height = height + 'px';
+
+        wrap.appendChild(link);
+      });
     });
   }
 

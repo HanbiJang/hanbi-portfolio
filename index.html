@@ -290,7 +290,6 @@
 
   var pdfDoc = null;
   var pageScale = 1; // 화면 너비에 맞춘 배율
-  var renderGeneration = 0; // 다시 그릴 때마다 올라가는 번호, 오래된 렌더링 작업을 구분하는 용도
 
   function setStatus(state, text) {
     statusEl.dataset.state = state;
@@ -310,10 +309,8 @@
   }
 
   // 페이지 하나를 캔버스에 그려서 pdf-pages 안에 추가함
-  function renderSinglePage(num, generation) {
+  function renderSinglePage(num) {
     return pdfDoc.getPage(num).then(function (page) {
-      if (generation !== renderGeneration) return; // 그 사이 새 렌더링이 시작됐으면 그만둠
-
       var viewport = page.getViewport({ scale: pageScale });
       var dpr = window.devicePixelRatio || 1; // 고해상도 화면 보정용
 
@@ -331,15 +328,12 @@
 
       wrap.appendChild(canvas);
       card.appendChild(wrap);
-
-      if (generation !== renderGeneration) return; // 캔버스 만드는 사이에도 새 렌더링이 시작됐는지 한 번 더 확인함
       pagesContainer.appendChild(card);
 
       var ctx = canvas.getContext('2d');
       var transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null;
 
       return page.render({ canvasContext: ctx, viewport: viewport, transform: transform }).promise.then(function () {
-        if (generation !== renderGeneration) return;
         return addLinkLayer(page, viewport, wrap);
       });
     });
@@ -374,18 +368,12 @@
 
   // 전체 페이지를 순서대로 하나씩 그림, 한꺼번에 그리면 순서가 뒤섞일 수 있어서 순차로 처리함
   function renderAllPages() {
-    renderGeneration += 1;
-    var myGeneration = renderGeneration;
     pagesContainer.innerHTML = '';
-
     var nums = [];
     for (var i = 1; i <= pdfDoc.numPages; i++) nums.push(i);
 
     return nums.reduce(function (chain, num) {
-      return chain.then(function () {
-        if (myGeneration !== renderGeneration) return; // 더 새로운 렌더링이 시작됐으면 남은 페이지는 그리지 않음
-        return renderSinglePage(num, myGeneration);
-      });
+      return chain.then(function () { return renderSinglePage(num); });
     }, Promise.resolve());
   }
 
@@ -406,18 +394,6 @@
       showEmpty();
     });
   }
-
-  var resizeTimer;
-  window.addEventListener('resize', function () {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function () {
-      if (!pdfDoc) return;
-      pdfDoc.getPage(1).then(function (firstPage) {
-        pageScale = computeScale(firstPage);
-        renderAllPages();
-      });
-    }, 200); // 리사이즈 중에 계속 다시 그리지 않도록 지연
-  });
 
   loadPdf();
 </script>
